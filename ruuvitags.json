@@ -1,0 +1,14 @@
+{
+   "config": [
+      {
+         "mac": "AA:BB:CC:44:33:55",
+         "name": "ExampleItemKey1",
+         "displayname": "Displayname1 Ruuvitag"
+      },
+      {
+         "mac": "AA:BB:CC:66:22:44",
+         "name": "ExampleItemKey2",
+         "displayname": "Displayname2 Ruuvitag"
+      }
+   ]
+}
