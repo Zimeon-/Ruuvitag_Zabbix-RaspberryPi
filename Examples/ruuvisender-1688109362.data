@@ -1,0 +1,31 @@
+ruuvisender-1688109362.data
+...
+ruuvi.null-byte.local ruuvitag.data_format[ExampleItemKey1] 5
+ruuvi.null-byte.local ruuvitag.humidity[ExampleItemKey1] 54.47
+ruuvi.null-byte.local ruuvitag.temperature[ExampleItemKey1] 23.25
+ruuvi.null-byte.local ruuvitag.pressure[ExampleItemKey1] 996.19
+ruuvi.null-byte.local ruuvitag.acceleration[ExampleItemKey1] 1016.0551166152356
+ruuvi.null-byte.local ruuvitag.acceleration_x[ExampleItemKey1] 60
+ruuvi.null-byte.local ruuvitag.acceleration_y[ExampleItemKey1] 452
+ruuvi.null-byte.local ruuvitag.acceleration_z[ExampleItemKey1] 908
+ruuvi.null-byte.local ruuvitag.tx_power[ExampleItemKey1] 4
+ruuvi.null-byte.local ruuvitag.battery[ExampleItemKey1] 2992
+ruuvi.null-byte.local ruuvitag.movement_counter[ExampleItemKey1] 22
+ruuvi.null-byte.local ruuvitag.measurement_sequence_number[ExampleItemKey1] 46178
+ruuvi.null-byte.local ruuvitag.mac[ExampleItemKey1] aabbcc662244
+ruuvi.null-byte.local ruuvitag.data_format[ExampleItemKey2] 5
+ruuvi.null-byte.local ruuvitag.humidity[ExampleItemKey2] 45.05
+ruuvi.null-byte.local ruuvitag.temperature[ExampleItemKey2] 26.11
+ruuvi.null-byte.local ruuvitag.pressure[ExampleItemKey2] 996.48
+ruuvi.null-byte.local ruuvitag.acceleration[ExampleItemKey2] 1015.8031305326834
+ruuvi.null-byte.local ruuvitag.acceleration_x[ExampleItemKey2] -44
+ruuvi.null-byte.local ruuvitag.acceleration_y[ExampleItemKey2] 148
+ruuvi.null-byte.local ruuvitag.acceleration_z[ExampleItemKey2] 1004
+ruuvi.null-byte.local ruuvitag.tx_power[ExampleItemKey2] 4
+ruuvi.null-byte.local ruuvitag.battery[ExampleItemKey2] 3164
+ruuvi.null-byte.local ruuvitag.movement_counter[ExampleItemKey2] 7
+ruuvi.null-byte.local ruuvitag.measurement_sequence_number[ExampleItemKey2] 19049
+ruuvi.null-byte.local ruuvitag.mac[ExampleItemKey2] aabbcc443355
+.....
+ZBX Sender:Response from "zbx-proxy.example.local:10051": "processed: 39; failed: 26; total: 65; seconds spent: 0.003094"
+sent: 65; skipped: 0; total: 65

@@ -23,7 +23,7 @@ DE:8C:F1:D8:E2:D4
 {'data_format': 5, 'humidity': 51.04, 'temperature': 23.23, 'pressure': 981.06, 'acceleration': 1053.7703734685276, 'acceleration_x': 52, 'acceleration_y': -32, 'acceleration_z': 1052, 'tx_power': 4, 'battery': 3083, 'movement_counter': 29, 'measurement_sequence_number': 27431, 'mac': 'aabbcc662244'}
 ^CStop receiving broadcasts
 ```
-5. Add the following user parameters to your Zabbix agent configuration file
+5. Add the following user parameters to your Zabbix agent configuration file. Remember to restart the Zabbix agent!
 
 >UserParameter=ruuvitag.get,python /home/ruuvi/Ruuvitag/get_data.py
 
@@ -35,3 +35,5 @@ DE:8C:F1:D8:E2:D4
 > You can run the ruuvitag discovery manually in Zabbix frontend. This should create the neccessary items based on your ruuvitags.json file defined earlier.
 
 Note: These scripts assume that they are located in "/home/ruuvi/Ruuvitag/" directory. If you choose to save them somewhere else, remember to change these hardcoded paths.
+
+If the sender fails (For example missing items when adding ruuvitags and discovery has not run yet), or failure sending data for any other reason. Then the python script doesn't delete the temporary sender file in /tmp/ directory. You can use this file to compare items on the zabbix server, or run the sender manually in verbose mode.
