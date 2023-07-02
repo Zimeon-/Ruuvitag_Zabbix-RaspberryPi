@@ -25,8 +25,8 @@ DE:8C:F1:D8:E2:D4
 ```
 5. Add the following user parameters to your Zabbix agent configuration file
 
->Ruuvitag Key
 >UserParameter=ruuvitag.get,python /home/ruuvi/Ruuvitag/get_data.py
+
 >UserParameter=ruuvitag.discover,python /home/ruuvi/Ruuvitag/discover_tags.py
 
 5. Add the following cron to the user ruuvi with #crontab -e
