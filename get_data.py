@@ -1,59 +1,93 @@
-from ruuvitag_sensor.ruuvitag import RuuviTag
-import json, re
-import os, time, socket, subprocess
+import json
+import re
+import os
+import time
+import socket
+import subprocess
+from collections import defaultdict
+import threading
 
+from ruuvitag_sensor.ruuvi import RuuviTagSensor, RunFlag
+
+# Load tag metadata from config
 def load_ruuvitags():
-   f = open("/home/ruuvi/Ruuvitag/ruuvitags.json")
-   data = json.load(f)
-   f.close()
-   return data
+    with open("/home/ruuvi/Ruuvitag/ruuvitags.json") as f:
+        return json.load(f)
 
-def get_ruuvitag_data(mac):
-   from ruuvitag_sensor.ruuvitag import RuuviTag
-   # Ruuvitag Bluetooth MAC
-   sensor = RuuviTag(mac)
-   # update state from the device
-   state = sensor.update()
-   # get latest state (does not get it from the device)
-   state = sensor.state
-   return state
-
-def write_zbx_data(zbxhostname, tag, state):
-   for key in state:
-      value = state[key]
-      f.write("{} ruuvitag.{}[{}] {}\n".format(zbxhostname, key, tag["name"], value))
-
-#Load Ruuvitags from config
+# Load config and build MAC-to-name mapping
 ruuvitags = load_ruuvitags()
-#Open file for writing
+mac_to_name = {
+    tag["mac"].lower().replace(":", ""): tag["name"] for tag in ruuvitags["config"]
+}
+configured_macs = list(mac_to_name.keys())
+
+# Storage for collected sensor data
+sensor_data_store = defaultdict(list)
+
+# Handler to process incoming sensor data
+def handle_data(found_data):
+    mac, data = found_data
+    mac = mac.lower().replace(":", "")
+    if mac in mac_to_name:
+        sensor_data_store[mac].append(data)
+
+# Start scanning
+print("Starting Bluetooth scan for 10 seconds...")
+run_flag = RunFlag()
+thread = threading.Thread(target=RuuviTagSensor.get_data, kwargs={
+    'callback': handle_data,
+    'run_flag': run_flag
+})
+thread.start()
+
+# Collect for 30 seconds
+time.sleep(30)
+run_flag.running = False
+thread.join()
+print("Data collection complete.")
+
+# Function to average numeric values
+def average_values(data_list):
+    if not data_list:
+        return {}
+    numeric_keys = [k for k in data_list[0] if isinstance(data_list[0][k], (int, float))]
+    avg = {}
+    for key in numeric_keys:
+        values = [entry[key] for entry in data_list if key in entry and isinstance(entry[key], (int, float))]
+        if values:
+            avg[key] = sum(values) / len(values)
+    return avg
+
+# Write to Zabbix sender file
 epoch_time = int(time.time())
-zbxfile = "/tmp/ruuvisender-{}.data".format(epoch_time)
-f = open(zbxfile, "w")
-#Get Hostname for ZBX File
+zbxfile = f"/tmp/ruuvisender-{epoch_time}.data"
 zbxhostname = socket.gethostname()
-#Get Ruuvitag data from sensors in config file
-for tag in ruuvitags['config']:
-   sensor_data = get_ruuvitag_data(tag["mac"])
-   write_zbx_data(zbxhostname, tag, sensor_data)
-f.close()
-#Catch Zabbix Sender output
-proc = subprocess.Popen("/usr/bin/zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -i /tmp/ruuvisender-{}.data".format(epoch_time), shell=True, stdout=subprocess.PIPE)
-(out, err) = proc.communicate()
-zbxr = re.findall(r"failed: (\d+)",out.decode('utf-8'))
-zbxt = re.findall(r"total: (\d+)",out.decode('utf-8'))
-#Check if sender failed any items
+
+with open(zbxfile, "w") as f:
+    for mac, samples in sensor_data_store.items():
+        avg_data = average_values(samples)
+        tag_name = mac_to_name.get(mac, mac)
+        for key, value in avg_data.items():
+            f.write(f"{zbxhostname} ruuvitag.{key}[{tag_name}] {value}\n")
+
+# Send data to Zabbix
+cmd = f"/usr/bin/zabbix_sender -c /etc/zabbix/zabbix_agent2.conf -i {zbxfile}"
+proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+out, _ = proc.communicate()
+output = out.decode("utf-8")
+
+# Handle Zabbix sender output
+zbxr = re.findall(r"failed: (\d+)", output)
+zbxt = re.findall(r"total: (\d+)", output)
+
 if zbxr and int(zbxr[0]) == 0:
-   print("No Errors Detected, removing temporary file {}".format(zbxfile))
-   os.remove(zbxfile)
-elif int(zbxt[0]) == 0:
-   print("Nothing send to Zabbix Server, use {} to debug Zabbix Sender issues.".format(zbxfile))
-   f=open(zbxfile, "a")
-   f.write("ZBX Sender:{}".format(out.decode('utf-8')))
-   #Close file
-   f.close()
+    print(f"No Errors Detected, removing temporary file {zbxfile}")
+    os.remove(zbxfile)
+elif zbxt and int(zbxt[0]) == 0:
+    print(f"Nothing sent to Zabbix Server, use {zbxfile} to debug.")
+    with open(zbxfile, "a") as f:
+        f.write(f"ZBX Sender:\n{output}")
 else:
-   print("Errors found in zabbix sender process. Use {} to debug Zabbix Sender issues.".format(zbxfile))
-   f=open(zbxfile, "a")
-   f.write("ZBX Sender:{}".format(out.decode('utf-8')))
-   #Close file
-   f.close()
+    print(f"Errors in Zabbix sender. Use {zbxfile} to debug.")
+    with open(zbxfile, "a") as f:
+        f.write(f"ZBX Sender:\n{output}")
